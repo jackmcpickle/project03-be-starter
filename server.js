@@ -12,12 +12,14 @@ const app = express();
 const server = new ApolloServer({
   typeDefs,
   resolvers,
-  context: authMiddleware
+  context: authMiddleware,
+  playground: true,
+  introspection: true,
 });
 
 app.use(logger('dev'));
 
-server.applyMiddleware({ app });
+server.applyMiddleware({ app, path: '/graphql' });
 
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
