@@ -1,4 +1,4 @@
-const { AuthenticationError } = require('apollo-server-express');
+const { AuthenticationError } = require('apollo-server-fastify');
 const { User } = require('../models');
 const { signToken } = require('../utils/auth');
 

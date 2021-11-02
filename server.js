@@ -1,32 +1,47 @@
 require('dotenv').config();
-const express = require('express');
-const logger = require('morgan');
-const { ApolloServer } = require('apollo-server-express');
+const logger = require('./utils/logger');
+const fastify = require('fastify');
+const { ApolloServer } = require('apollo-server-fastify');
+const { ApolloServerPluginDrainHttpServer } = require('apollo-server-core');
 
 const { typeDefs, resolvers } = require('./schemas');
 const { authMiddleware } = require('./utils/auth');
-const db = require('./config/connection');
+const dbConnection = require('./config/connection');
+
+const app = fastify({ logger });
 
 const PORT = process.env.PORT || 3001;
-const app = express();
+
+function fastifyAppClosePlugin(app) {
+  return {
+    async serverWillStart() {
+      return {
+        async drainServer() {
+          await app.close();
+        },
+      };
+    },
+  };
+}
+
 const server = new ApolloServer({
   typeDefs,
   resolvers,
   context: authMiddleware,
   playground: true,
   introspection: true,
+  plugins: [
+    fastifyAppClosePlugin(app),
+    ApolloServerPluginDrainHttpServer({ httpServer: app.server }),
+  ],
 });
 
-app.use(logger('dev'));
+async function startApolloServer(typeDefs, resolvers) {
+  await server.start();
+  app.register(server.createHandler({ path: '/graphql', }));
+  await dbConnection;
+  await app.listen(PORT);
+  logger.info(`🚀 Server ready at http://localhost:${PORT}${server.graphqlPath}`);
+}
 
-server.applyMiddleware({ app, path: '/graphql' });
-
-app.use(express.urlencoded({ extended: false }));
-app.use(express.json());
-
-db.once('open', () => {
-  app.listen(PORT, () => {
-    console.log(`API server running on port ${PORT}!`);
-    console.log(`Use GraphQL at http://localhost:${PORT}${server.graphqlPath}`);
-  });
-});
+startApolloServer();
