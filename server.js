@@ -42,7 +42,7 @@ async function startApolloServer(typeDefs, resolvers) {
   await server.start();
   app.register(server.createHandler({ path: '/graphql', }));
   await dbConnection;
-  await app.listen(PORT);
+  await app.listen(PORT, '0.0.0.0');
   logger.info(`🚀 Server ready at http://localhost:${PORT}${server.graphqlPath}`);
 }
 
