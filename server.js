@@ -12,6 +12,8 @@ const app = fastify({ logger });
 
 const PORT = process.env.PORT || 3001;
 
+app.get('/', () => ({success: true}))
+
 function fastifyAppClosePlugin(app) {
   return {
     async serverWillStart() {
